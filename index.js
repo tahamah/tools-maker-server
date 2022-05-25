@@ -80,13 +80,27 @@ async function run() {
             )
             res.send(result)
         })
+        app.patch('/updateProfile', async (req, res) => {
+            const email = req.query.email
+            const { phone, education, image } = req.body
+            const filter = { email }
 
-        // app.put('/profile', async (req, res) => {
-        //     const data = req.body
-        //     const result = await profileCollection.insertOne(data)
-        //     res.send(result)
-        // })
+            const updateDoc = {
+                $set: {
+                    education,
+                    phone,
+                    image,
+                },
+            }
+            const result = await profileCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
 
+        app.get('/updateProfile', async (req, res) => {
+            const email = req.query.email
+            const result = await profileCollection.findOne({ email })
+            res.send(result)
+        })
         app.get('/profile/:email', async (req, res) => {
             const email = req.params.email
             const result = await toolsCollection.find({ email }).toArray()
