@@ -1,10 +1,11 @@
 const express = require('express')
 const app = express()
+require('dotenv').config()
 const port = process.env.PORT || 5000
 const cors = require('cors')
-require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 //middleware
 app.use(cors())
@@ -43,6 +44,28 @@ async function run() {
             const result = await toolsCollection.findOne(filter)
             res.send(result)
         })
+        app.get('/singleOrder', async (req, res) => {
+            const id = req.query.id
+            const filter = { _id: ObjectId(id) }
+            const requestedOrder = await orderCollection.findOne(filter)
+            res.send(requestedOrder)
+        })
+
+        app.patch('/updateSignleOrder', async (req, res) => {
+            const transactionId = req.body.transactionId
+            const id = req.query.id
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId,
+                },
+            }
+
+            const result = await orderCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
+
         app.post('/addProducts', async (req, res) => {
             const products = req.body
             const result = await toolsCollection.insertOne(products)
@@ -125,6 +148,22 @@ async function run() {
             const filter = { user }
             const result = await orderCollection.find(filter).toArray()
             res.send(result)
+        })
+        //payment
+        app.post('/create-payment-intent', async (req, res) => {
+            if (!req.body.price || !process.env.STRIPE_SECRET_KEY) {
+                return
+            }
+            const price = parseFloat(req.body.price) * 100
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: price,
+                currency: 'usd',
+            })
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
         })
     } finally {
         //
