@@ -43,6 +43,11 @@ async function run() {
             const result = await toolsCollection.findOne(filter)
             res.send(result)
         })
+        app.post('/addProducts', async (req, res) => {
+            const products = req.body
+            const result = await toolsCollection.insertOne(products)
+            res.send(result)
+        })
 
         app.put('/tools/:id', async (req, res) => {
             const id = req.params.id
