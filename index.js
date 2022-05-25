@@ -34,6 +34,26 @@ async function run() {
             const result = await toolsCollection.find({}).limit(4).toArray()
             res.send(result)
         })
+        app.get('/tools/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const result = await toolsCollection.findOne(filter)
+            res.send(result)
+        })
+
+        app.put('/tools/:id', async (req, res) => {
+            const id = req.params.id
+            const data = req.body
+            const filter = { _id: ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    available: data.available,
+                },
+            }
+            const result = await toolsCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
+
         //get all reviews
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find({}).toArray()
@@ -45,17 +65,31 @@ async function run() {
             const result = await reviewsCollection.insertOne(data)
             res.send(result)
         })
-
-        app.post('/profile', async (req, res) => {
-            const data = req.body
-            const result = await profileCollection.insertOne(data)
+        app.put('/profile', async (req, res) => {
+            const user = req.body
+            const { email } = user
+            const filter = { email }
+            const option = { upsert: true }
+            const updateDoc = {
+                $set: user,
+            }
+            const result = await profileCollection.updateOne(
+                filter,
+                updateDoc,
+                option
+            )
             res.send(result)
         })
+
+        // app.put('/profile', async (req, res) => {
+        //     const data = req.body
+        //     const result = await profileCollection.insertOne(data)
+        //     res.send(result)
+        // })
 
         app.get('/profile/:email', async (req, res) => {
             const email = req.params.email
             const result = await toolsCollection.find({ email }).toArray()
-            console.log(result)
             res.send(result)
         })
     } finally {
