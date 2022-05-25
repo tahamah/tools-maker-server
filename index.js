@@ -49,18 +49,18 @@ async function run() {
             res.send(result)
         })
 
-        app.put('/tools/:id', async (req, res) => {
-            const id = req.params.id
-            const data = req.body
-            const filter = { _id: ObjectId(id) }
-            const updateDoc = {
-                $set: {
-                    available: data.available,
-                },
-            }
-            const result = await toolsCollection.updateOne(filter, updateDoc)
-            res.send(result)
-        })
+        // app.put('/tools/:id', async (req, res) => {
+        //     const id = req.params.id
+        //     const data = req.body
+        //     const filter = { _id: ObjectId(id) }
+        //     const updateDoc = {
+        //         $set: {
+        //             available: data.available,
+        //         },
+        //     }
+        //     const result = await toolsCollection.updateOne(filter, updateDoc)
+        //     res.send(result)
+        // })
 
         //get all reviews
         app.get('/reviews', async (req, res) => {
