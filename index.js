@@ -21,12 +21,15 @@ const client = new MongoClient(uri, {
     serverApi: ServerApiVersion.v1,
 })
 
+//Collections
+const toolsCollection = client.db('tools-maker').collection('tools')
+const profileCollection = client.db('tools-maker').collection('profile')
+const reviewsCollection = client.db('tools-maker').collection('reviews')
+const orderCollection = client.db('tools-maker').collection('orders')
+
 async function run() {
     try {
         await client.connect()
-        const toolsCollection = client.db('tools-maker').collection('tools')
-        const profileCollection = client.db('tools-maker').collection('profile')
-        const reviewsCollection = client.db('tools-maker').collection('reviews')
 
         //get all tools
         //https://morning-ocean-16366.herokuapp.com/tools
@@ -104,6 +107,18 @@ async function run() {
         app.get('/profile/:email', async (req, res) => {
             const email = req.params.email
             const result = await toolsCollection.find({ email }).toArray()
+            res.send(result)
+        })
+
+        app.post('/purchaseProduct', async (req, res) => {
+            const orderedItem = req.body
+            const result = await orderCollection.insertOne(orderedItem)
+            res.send(result)
+        })
+        app.get('/purchaseProduct', async (req, res) => {
+            const user = req.query.user
+            const filter = { user }
+            const result = await orderCollection.find(filter).toArray()
             res.send(result)
         })
     } finally {
