@@ -30,7 +30,6 @@ const verifyJWT = (req, res, next) => {
                 .send({ success: false, message: 'Forbidden Access' })
         }
         if (requrestedUserEmail !== decoded.email) {
-            console.log(requrestedUserEmail, decoded.email)
             return res
                 .status(401)
                 .send({ success: false, message: 'Unauthorized Access' })
@@ -39,6 +38,20 @@ const verifyJWT = (req, res, next) => {
 
         next()
     })
+}
+//verify admin
+const verifyAdmin = async (req, res, next) => {
+    const requestedUserEmail = req.query.email
+
+    const filter = { email: requestedUserEmail }
+    const result = await profileCollection.findOne(filter)
+
+    if (result?.role !== 'admin') {
+        return res
+            .status(401)
+            .send({ success: false, message: 'Unauthorized Access' })
+    }
+    next()
 }
 
 //Main Api
@@ -62,11 +75,35 @@ async function run() {
     try {
         await client.connect()
 
-        //get all tools
+        //get 4 tools
         //https://morning-ocean-16366.herokuapp.com/tools
         app.get('/tools', async (req, res) => {
             const result = await toolsCollection.find({}).limit(4).toArray()
             res.send(result)
+        })
+
+        // get all products
+        app.get('/allTools', async (req, res) => {
+            const result = await toolsCollection.find({}).toArray()
+            res.send(result)
+        })
+
+        // delete one product
+        app.delete('/deleteOneProduct', async (req, res) => {
+            const id = req.query.id
+            const filter = { _id: ObjectId(id) }
+            const result = await toolsCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+        //admin
+        app.get('/isAdmin', async (req, res) => {
+            const email = req.query.email
+            const user = await profileCollection.findOne({ email })
+            if (user?.role === 'admin') {
+                return res.json({ isAdmin: true })
+            }
+            res.json({ isAdmin: false })
         })
 
         app.post('/getToken', (req, res) => {
@@ -137,19 +174,6 @@ async function run() {
             res.send(result)
         })
 
-        // app.put('/tools/:id', async (req, res) => {
-        //     const id = req.params.id
-        //     const data = req.body
-        //     const filter = { _id: ObjectId(id) }
-        //     const updateDoc = {
-        //         $set: {
-        //             available: data.available,
-        //         },
-        //     }
-        //     const result = await toolsCollection.updateOne(filter, updateDoc)
-        //     res.send(result)
-        // })
-
         //get all reviews
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find({}).toArray()
@@ -161,6 +185,7 @@ async function run() {
             const result = await reviewsCollection.insertOne(data)
             res.send(result)
         })
+
         app.put('/profile', async (req, res) => {
             const user = req.body
             const { email } = user
@@ -192,11 +217,12 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/updateProfile', async (req, res) => {
+        app.get('/getProfile', async (req, res) => {
             const email = req.query.email
-            const result = await profileCollection.findOne({ email })
-            res.send(result)
+            const user = await profileCollection.findOne({ email })
+            res.send(user)
         })
+
         app.get('/profile/:email', async (req, res) => {
             const email = req.params.email
             const result = await toolsCollection.find({ email }).toArray()
