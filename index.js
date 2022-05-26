@@ -50,6 +50,10 @@ async function run() {
             const requestedOrder = await orderCollection.findOne(filter)
             res.send(requestedOrder)
         })
+        app.get('/allOrders', async (req, res) => {
+            const result = await orderCollection.find({}).toArray()
+            res.send(result)
+        })
 
         app.patch('/updateSignleOrder', async (req, res) => {
             const transactionId = req.body.transactionId
@@ -61,7 +65,6 @@ async function run() {
                     transactionId,
                 },
             }
-
             const result = await orderCollection.updateOne(filter, updatedDoc)
             res.send(result)
         })
