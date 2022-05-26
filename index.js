@@ -38,6 +38,18 @@ async function run() {
             const result = await toolsCollection.find({}).limit(4).toArray()
             res.send(result)
         })
+
+        app.patch('/updateDeliveryStatus', async (req, res) => {
+            const id = req.body.id
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    deliveryStatus: true,
+                },
+            }
+            const result = await orderCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
         app.get('/tools/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: ObjectId(id) }
