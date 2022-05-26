@@ -11,6 +11,36 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 app.use(cors())
 app.use(express.json())
 
+// verify JWT token
+const verifyJWT = (req, res, next) => {
+    const clientToken = req.headers.authorization
+    const requrestedUserEmail = req.query.email
+
+    if (!clientToken) {
+        return res
+            .status(401)
+            .send({ success: false, message: 'Unauthorized Access' })
+    }
+
+    const token = clientToken.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+        if (err) {
+            return res
+                .status(403)
+                .send({ success: false, message: 'Forbidden Access' })
+        }
+        if (requrestedUserEmail !== decoded.email) {
+            console.log(requrestedUserEmail, decoded.email)
+            return res
+                .status(401)
+                .send({ success: false, message: 'Unauthorized Access' })
+        }
+        req.decoded = decoded
+
+        next()
+    })
+}
+
 //Main Api
 //https://morning-ocean-16366.herokuapp.com/
 
@@ -37,6 +67,12 @@ async function run() {
         app.get('/tools', async (req, res) => {
             const result = await toolsCollection.find({}).limit(4).toArray()
             res.send(result)
+        })
+
+        app.post('/getToken', (req, res) => {
+            const email = req.body.email
+            const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
+            res.send({ accessToken: token })
         })
 
         app.patch('/updateDeliveryStatus', async (req, res) => {
@@ -67,6 +103,14 @@ async function run() {
             res.send(result)
         })
 
+        // get users orders
+        app.get('/UsersOrders', async (req, res) => {
+            const email = req.query.email
+
+            const orders = await orderCollection.find({ user: email }).toArray()
+            res.send(orders)
+        })
+
         app.patch('/updateSignleOrder', async (req, res) => {
             const transactionId = req.body.transactionId
             const id = req.query.id
@@ -84,6 +128,12 @@ async function run() {
         app.post('/addProducts', async (req, res) => {
             const products = req.body
             const result = await toolsCollection.insertOne(products)
+            res.send(result)
+        })
+        app.delete('/deleteOneProduct', async (req, res) => {
+            const id = req.query.id
+            const filter = { _id: ObjectId(id) }
+            const result = await orderCollection.deleteOne(filter)
             res.send(result)
         })
 
@@ -155,6 +205,25 @@ async function run() {
         app.get('/profile', async (req, res) => {
             const email = req.params.email
             const result = await profileCollection.find({}).toArray()
+            res.send(result)
+        })
+        app.patch('/makeAdmin', async (req, res) => {
+            const id = req.body.id
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    role: 'admin',
+                },
+            }
+            const result = await profileCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
+
+        // delete user
+        app.delete('/deleteOneUser', async (req, res) => {
+            const id = req.query.id
+            const filter = { _id: ObjectId(id) }
+            const result = await profileCollection.deleteOne(filter)
             res.send(result)
         })
 
