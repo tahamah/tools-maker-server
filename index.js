@@ -89,12 +89,17 @@ async function run() {
         })
 
         // delete one product
-        app.delete('/deleteOneProduct', async (req, res) => {
-            const id = req.query.id
-            const filter = { _id: ObjectId(id) }
-            const result = await toolsCollection.deleteOne(filter)
-            res.send(result)
-        })
+        app.delete(
+            '/deleteOneProduct',
+            verifyJWT,
+            verifyAdmin,
+            async (req, res) => {
+                const id = req.query.id
+                const filter = { _id: ObjectId(id) }
+                const result = await toolsCollection.deleteOne(filter)
+                res.send(result)
+            }
+        )
 
         //admin
         app.get('/isAdmin', async (req, res) => {
@@ -112,24 +117,32 @@ async function run() {
             res.send({ accessToken: token })
         })
 
-        app.patch('/updateDeliveryStatus', async (req, res) => {
-            const id = req.body.id
-            const filter = { _id: ObjectId(id) }
-            const updatedDoc = {
-                $set: {
-                    deliveryStatus: true,
-                },
+        app.patch(
+            '/updateDeliveryStatus',
+            verifyJWT,
+            verifyAdmin,
+            async (req, res) => {
+                const id = req.body.id
+                const filter = { _id: ObjectId(id) }
+                const updatedDoc = {
+                    $set: {
+                        deliveryStatus: true,
+                    },
+                }
+                const result = await orderCollection.updateOne(
+                    filter,
+                    updatedDoc
+                )
+                res.send(result)
             }
-            const result = await orderCollection.updateOne(filter, updatedDoc)
-            res.send(result)
-        })
-        app.get('/tools/:id', async (req, res) => {
+        )
+        app.get('/tools/:id', verifyJWT, async (req, res) => {
             const id = req.params.id
             const filter = { _id: ObjectId(id) }
             const result = await toolsCollection.findOne(filter)
             res.send(result)
         })
-        app.get('/singleOrder', async (req, res) => {
+        app.get('/singleOrder', verifyJWT, async (req, res) => {
             const id = req.query.id
             const filter = { _id: ObjectId(id) }
             const requestedOrder = await orderCollection.findOne(filter)
@@ -141,38 +154,50 @@ async function run() {
         })
 
         // get users orders
-        app.get('/UsersOrders', async (req, res) => {
+        app.get('/UsersOrders', verifyJWT, async (req, res) => {
             const email = req.query.email
-
             const orders = await orderCollection.find({ user: email }).toArray()
             res.send(orders)
         })
 
-        app.patch('/updateSignleOrder', async (req, res) => {
-            const transactionId = req.body.transactionId
-            const id = req.query.id
-            const filter = { _id: ObjectId(id) }
-            const updatedDoc = {
-                $set: {
-                    paid: true,
-                    transactionId,
-                },
+        app.patch(
+            '/updateSignleOrder',
+            verifyJWT,
+            verifyAdmin,
+            async (req, res) => {
+                const transactionId = req.body.transactionId
+                const id = req.query.id
+                const filter = { _id: ObjectId(id) }
+                const updatedDoc = {
+                    $set: {
+                        paid: true,
+                        transactionId,
+                    },
+                }
+                const result = await orderCollection.updateOne(
+                    filter,
+                    updatedDoc
+                )
+                res.send(result)
             }
-            const result = await orderCollection.updateOne(filter, updatedDoc)
-            res.send(result)
-        })
+        )
 
-        app.post('/addProducts', async (req, res) => {
+        app.post('/addProducts', verifyJWT, verifyAdmin, async (req, res) => {
             const products = req.body
             const result = await toolsCollection.insertOne(products)
             res.send(result)
         })
-        app.delete('/deleteOneProduct', async (req, res) => {
-            const id = req.query.id
-            const filter = { _id: ObjectId(id) }
-            const result = await orderCollection.deleteOne(filter)
-            res.send(result)
-        })
+        app.delete(
+            '/deleteOneProduct',
+            verifyJWT,
+            verifyAdmin,
+            async (req, res) => {
+                const id = req.query.id
+                const filter = { _id: ObjectId(id) }
+                const result = await orderCollection.deleteOne(filter)
+                res.send(result)
+            }
+        )
 
         //get all reviews
         app.get('/reviews', async (req, res) => {
@@ -186,7 +211,7 @@ async function run() {
             res.send(result)
         })
 
-        app.put('/profile', async (req, res) => {
+        app.put('/profile', verifyJWT, async (req, res) => {
             const user = req.body
             const { email } = user
             const filter = { email }
@@ -201,7 +226,7 @@ async function run() {
             )
             res.send(result)
         })
-        app.patch('/updateProfile', async (req, res) => {
+        app.patch('/updateProfile', verifyJWT, async (req, res) => {
             const email = req.query.email
             const { phone, education, image } = req.body
             const filter = { email }
@@ -217,7 +242,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/getProfile', async (req, res) => {
+        app.get('/getProfile', verifyJWT, async (req, res) => {
             const email = req.query.email
             const user = await profileCollection.findOne({ email })
             res.send(user)
@@ -228,12 +253,14 @@ async function run() {
             const result = await toolsCollection.find({ email }).toArray()
             res.send(result)
         })
-        app.get('/profile', async (req, res) => {
+
+        app.get('/profile', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email
             const result = await profileCollection.find({}).toArray()
             res.send(result)
         })
-        app.patch('/makeAdmin', async (req, res) => {
+
+        app.patch('/makeAdmin', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.body.id
             const filter = { _id: ObjectId(id) }
             const updatedDoc = {
@@ -246,24 +273,31 @@ async function run() {
         })
 
         // delete user
-        app.delete('/deleteOneUser', async (req, res) => {
-            const id = req.query.id
-            const filter = { _id: ObjectId(id) }
-            const result = await profileCollection.deleteOne(filter)
-            res.send(result)
-        })
+        app.delete(
+            '/deleteOneUser',
+            verifyJWT,
+            verifyAdmin,
+            async (req, res) => {
+                const id = req.query.id
+                const filter = { _id: ObjectId(id) }
+                const result = await profileCollection.deleteOne(filter)
+                res.send(result)
+            }
+        )
 
-        app.post('/purchaseProduct', async (req, res) => {
+        app.post('/purchaseProduct', verifyJWT, async (req, res) => {
             const orderedItem = req.body
             const result = await orderCollection.insertOne(orderedItem)
             res.send(result)
         })
+        //purchaseProduct
         app.get('/purchaseProduct', async (req, res) => {
             const user = req.query.user
             const filter = { user }
             const result = await orderCollection.find(filter).toArray()
             res.send(result)
         })
+
         //payment
         app.post('/create-payment-intent', async (req, res) => {
             if (!req.body.price || !process.env.STRIPE_SECRET_KEY) {
