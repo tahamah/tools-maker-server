@@ -152,6 +152,11 @@ async function run() {
             const result = await toolsCollection.find({ email }).toArray()
             res.send(result)
         })
+        app.get('/profile', async (req, res) => {
+            const email = req.params.email
+            const result = await profileCollection.find({}).toArray()
+            res.send(result)
+        })
 
         app.post('/purchaseProduct', async (req, res) => {
             const orderedItem = req.body
