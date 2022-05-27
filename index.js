@@ -78,7 +78,7 @@ async function run() {
         //get 4 tools
         //https://morning-ocean-16366.herokuapp.com/tools
         app.get('/tools', async (req, res) => {
-            const result = await toolsCollection.find({}).limit(4).toArray()
+            const result = await toolsCollection.find({}).limit(6).toArray()
             res.send(result)
         })
 
@@ -116,7 +116,7 @@ async function run() {
             const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
             res.send({ accessToken: token })
         })
-
+        //
         app.patch(
             '/updateDeliveryStatus',
             verifyJWT,
@@ -142,6 +142,7 @@ async function run() {
             const result = await toolsCollection.findOne(filter)
             res.send(result)
         })
+        //
         app.get('/singleOrder', verifyJWT, async (req, res) => {
             const id = req.query.id
             const filter = { _id: ObjectId(id) }
@@ -154,33 +155,26 @@ async function run() {
         })
 
         // get users orders
+        //
         app.get('/UsersOrders', verifyJWT, async (req, res) => {
             const email = req.query.email
             const orders = await orderCollection.find({ user: email }).toArray()
             res.send(orders)
         })
-
-        app.patch(
-            '/updateSignleOrder',
-            verifyJWT,
-            verifyAdmin,
-            async (req, res) => {
-                const transactionId = req.body.transactionId
-                const id = req.query.id
-                const filter = { _id: ObjectId(id) }
-                const updatedDoc = {
-                    $set: {
-                        paid: true,
-                        transactionId,
-                    },
-                }
-                const result = await orderCollection.updateOne(
-                    filter,
-                    updatedDoc
-                )
-                res.send(result)
+        //
+        app.patch('/updateSignleOrder', verifyJWT, async (req, res) => {
+            const transactionId = req.body.transactionId
+            const id = req.query.id
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId,
+                },
             }
-        )
+            const result = await orderCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
 
         app.post('/addProducts', verifyJWT, verifyAdmin, async (req, res) => {
             const products = req.body
@@ -188,9 +182,9 @@ async function run() {
             res.send(result)
         })
         app.delete(
-            '/deleteOneProduct',
+            '/deleteOneOrder',
             verifyJWT,
-            verifyAdmin,
+
             async (req, res) => {
                 const id = req.query.id
                 const filter = { _id: ObjectId(id) }
@@ -210,7 +204,7 @@ async function run() {
             const result = await reviewsCollection.insertOne(data)
             res.send(result)
         })
-
+        //
         app.put('/profile', verifyJWT, async (req, res) => {
             const user = req.body
             const { email } = user
@@ -226,11 +220,11 @@ async function run() {
             )
             res.send(result)
         })
+        //
         app.patch('/updateProfile', verifyJWT, async (req, res) => {
             const email = req.query.email
             const { phone, education, image } = req.body
             const filter = { email }
-
             const updateDoc = {
                 $set: {
                     education,
@@ -241,7 +235,7 @@ async function run() {
             const result = await profileCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
-
+        //
         app.get('/getProfile', verifyJWT, async (req, res) => {
             const email = req.query.email
             const user = await profileCollection.findOne({ email })
@@ -253,13 +247,13 @@ async function run() {
             const result = await toolsCollection.find({ email }).toArray()
             res.send(result)
         })
-
+        //
         app.get('/profile', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email
             const result = await profileCollection.find({}).toArray()
             res.send(result)
         })
-
+        //
         app.patch('/makeAdmin', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.body.id
             const filter = { _id: ObjectId(id) }
@@ -273,6 +267,7 @@ async function run() {
         })
 
         // delete user
+        //
         app.delete(
             '/deleteOneUser',
             verifyJWT,
@@ -284,7 +279,7 @@ async function run() {
                 res.send(result)
             }
         )
-
+        //
         app.post('/purchaseProduct', verifyJWT, async (req, res) => {
             const orderedItem = req.body
             const result = await orderCollection.insertOne(orderedItem)
